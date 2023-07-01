@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import zerobase.weather.config.OpenApiUriRequestConfig;
 import zerobase.weather.domain.VO.WeatherRecord;
+import zerobase.weather.domain.entity.Diary;
+import zerobase.weather.dto.dairy.DiaryDto;
+import zerobase.weather.repository.DiaryRepository;
+import zerobase.weather.repository.JdbcMemoRepository;
 import zerobase.weather.repository.WeatherRecordRepository;
 
 import java.time.LocalDate;
@@ -27,6 +31,27 @@ import static zerobase.weather.constant.JsonKey.*;
 public class DiaryService {
     private final WeatherRecordRepository weatherRecordRepository;
     private final OpenApiUriRequestConfig openApiUriRequestConfig;
+    private final DiaryRepository diaryRepository;
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public DiaryDto createDiary(LocalDate date, String diaryText){
+        WeatherRecord currentWeatherRecord = weatherRecordRepository.findByDate(date);
+
+        if (currentWeatherRecord==null){
+            saveWeatherRecord();
+            currentWeatherRecord = weatherRecordRepository.findByDate(date);
+        }
+
+        return DiaryDto.fromEntity(
+                diaryRepository.save(Diary.builder()
+                        .weather(currentWeatherRecord.getWeather())
+                        .icon(currentWeatherRecord.getIcon())
+                        .temperature(Double.parseDouble(currentWeatherRecord.getTemperature().toString()))
+                        .text(diaryText)
+                        .date(currentWeatherRecord.getDate())
+                        .build())
+        );
+    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     @Scheduled(cron = "0 0 1 * * *")
