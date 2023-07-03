@@ -24,5 +24,4 @@ public class Diary {
     private Double temperature;
     private String text;
     private LocalDate date;
-
 }
