@@ -12,7 +12,6 @@ import zerobase.weather.exception.DiaryException;
 import zerobase.weather.type.ErrorCode;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +27,7 @@ class DiaryControllerTest {
     @Autowired
     DiaryController diaryController;
     @Test
+    @Transactional
     void successCreateDiary() {
         // given
         String diaryText = "fist dairy memo";
@@ -54,6 +54,7 @@ class DiaryControllerTest {
     }
 
     @Test
+
     void failCreateDiary_NotFoundDate() {
         // given
         String diaryText = "fist dairy memo";
@@ -65,6 +66,7 @@ class DiaryControllerTest {
     }
 
     @Test
+
     void successReadDiary() {
         // given
         String diaryText = "fist dairy memo";
@@ -84,6 +86,7 @@ class DiaryControllerTest {
     }
 
     @Test
+
     void failReadDiary() {
         // given
         String diaryText = "fist dairy memo";
@@ -100,24 +103,55 @@ class DiaryControllerTest {
     }
 
     @Test
+
     void successReadDiaries() {
 
         // given
         String diaryText = "diary";
-        int[] numOfDiaryPerDay = {1,2,3};
         for (int lapse = 0; lapse < 3; lapse++) {
-            for (int i = 0; i < numOfDiaryPerDay[lapse]; i++) {
-                diaryController.createDiary(LocalDate.now().minusDays(lapse), diaryText);
-            }
+            diaryController.createDiary(LocalDate.now(), diaryText);
         }
 
         // when
         DiaryChunkDto diaryChunkDto = diaryController.readDiaryBetween(LocalDate.now().minusDays(2), LocalDate.now());
         List<DiaryDto> diaryDtos = diaryChunkDto.getDiaryChunk();
         // then
-        System.out.println(diaryDtos);
-
+        assertEquals(diaryDtos.size(), 3);
     }
+
+    @Test
+
+    void successDeleteDiary() {
+        // given
+        String diaryText = "diary";
+        for (int lapse = 0; lapse < 3; lapse++) {
+            diaryController.createDiary(LocalDate.now(), diaryText);
+        }
+        // when
+        diaryController.deleteDiary(LocalDate.now());
+        DiaryChunkDto diaryChunkDto = diaryController.readDiary(LocalDate.now());
+        List<DiaryDto> diaryDtos = diaryChunkDto.getDiaryChunk();
+        // then
+        assertEquals(diaryDtos.size(), 0);
+    }
+
+    @Test
+    void successUpdateDiary() {
+        // given
+        String diaryText = "diary";
+        String newDiaryText = "new diary";
+        for (int lapse = 0; lapse < 1; lapse++) {
+            diaryController.createDiary(LocalDate.now(), diaryText);
+        }
+        // when
+        diaryController.updateDiary(LocalDate.now(), newDiaryText);
+        DiaryChunkDto diaryChunkDto = diaryController.readDiary(LocalDate.now());
+        List<DiaryDto> diaryDtos = diaryChunkDto.getDiaryChunk();
+        // then
+        assertEquals(diaryDtos.size(), 1);
+        assertEquals(diaryDtos.get(0).getText(), newDiaryText);
+    }
+
 
 
 }
